@@ -15,7 +15,7 @@ gvm version                  : Displays the current running version of gvm for W
 
 If you want to build from source,  ```git clone``` this repo into your GOPATH and runn ```go install```.
 
-If you have Go installed, the simplest way to install is probably ```go get github.com/danielkermode/gvm```.
+If you have Go installed, the simplest way to install is probably ```go get github.com/danielkermode/gvm```.Then if GOPATH/bin is in your PATH, you can run ```gvm``` from anywhere in the command line and you're good to go.
 
 If you just want the executable (which you can use to get Go installations if you don't have one on your machine):
 
