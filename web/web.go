@@ -44,6 +44,7 @@ func Download(version string, arch string, root string) bool {
 	dest := filepath.Join(root, "go"+version)
 	//this is the "go" folder inside the new folder containing the files for running Go.
 	godest := filepath.Join(dest, "go")
+	fmt.Println("Unzipping files...")
 	ziperr := unzip(filedir, dest, version)
 	if ziperr != nil {
 		fmt.Println("Error while unzipping", url, "-", ziperr)
@@ -137,6 +138,8 @@ func unzip(src string, dest string, version string) error {
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(path, f.Mode())
 		} else {
+			//make any needed folders for the file in question
+			os.MkdirAll(filepath.Clean(path+"\\.."), f.Mode())
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
 				return err
