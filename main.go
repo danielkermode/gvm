@@ -25,7 +25,7 @@ func main() {
 		return
 	}
 	if len(args) > 2 {
-		detail = strings.ToLower(args[2])
+		detail = args[2]
 	}
 	if len(args) > 3 {
 		fmt.Println("Too many args: gvm expects 2 maximum.")
@@ -47,6 +47,8 @@ func main() {
 		listGos()
 	case "ls":
 		listGos()
+	case "uninstall":
+		uninstall(detail)
 	case "use":
 		useGo(detail)
 	case "version":
@@ -61,7 +63,7 @@ func main() {
 func install(version string, arch string) bool {
 	fmt.Println("")
 	if os.Getenv("GOROOT") == "" {
-		fmt.Println("No GOROOT set. Set a GOROOT for go installations with gvm goroot <path>.")
+		fmt.Println("No GOROOT set. Set a GOROOT for Go installations with gvm goroot <path>.")
 		return false
 	}
 	if version == "" {
@@ -90,7 +92,10 @@ func goroot(path string) {
 	userEnvPath := "Environment"
 	setEnvVar("GOROOT", newpath, machineEnvPath, true)
 	setEnvVar("GOROOT", newpath, userEnvPath, false)
-	fmt.Println("Set the GOROOT to " + newpath)
+	//Also update path for user and local machine
+	updatePathVar("PATH", filepath.FromSlash(os.Getenv("GOROOT")), newpath, machineEnvPath, true)
+	updatePathVar("PATH", filepath.FromSlash(os.Getenv("GOROOT")), newpath, userEnvPath, false)
+	fmt.Println("Set the GOROOT to " + newpath + ". Also updated PATH.")
 	fmt.Println("Note: You'll have to start another prompt to see the changes.")
 }
 
@@ -125,6 +130,29 @@ func listGos() {
 	}
 }
 
+func uninstall(unVer string) {
+	if unVer == "" {
+		fmt.Println("A version to uninstall must be specified.")
+	}
+	validDir := regexp.MustCompile(`go(\d\.\d\.\d){0,1}`)
+	gorootroot := filepath.Clean(os.Getenv("GOROOT") + "\\..")
+	files, _ := ioutil.ReadDir(gorootroot)
+	fmt.Println("")
+	for _, f := range files {
+		if f.IsDir() && validDir.MatchString(f.Name()) {
+			goDir := filepath.Join(gorootroot, f.Name())
+			version := getDirVersion(goDir)
+			if version == "go"+unVer {
+				os.RemoveAll(goDir)
+				fmt.Println("Uninstalled Go version " + version[2:] + ".")
+				fmt.Println("Note: If this was your GOROOT, make sure to set a new GOROOT with gvm goroot <path>")
+				return
+			}
+		}
+	}
+	fmt.Println("Couldn't uninstall Go version " + unVer + ". Check Go versions with gvm list.")
+}
+
 func useGo(newVer string) {
 	if os.Getenv("GOROOT") == "" {
 		fmt.Println("No GOROOT set. Set a GOROOT for go installations with gvm goroot <path>.")
@@ -146,9 +174,12 @@ func useGo(newVer string) {
 				//The path should be the same for all windows OSes.
 				machineEnvPath := "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"
 				userEnvPath := "Environment"
-				setEnvVar("GOROOT", goDir, machineEnvPath, true)
-				setEnvVar("GOROOT", goDir, userEnvPath, false)
-				fmt.Println("Now using Go version " + version[2:] + ". Set GOROOT to " + goDir)
+				setEnvVar("GOROOT", filepath.FromSlash(goDir), machineEnvPath, true)
+				setEnvVar("GOROOT", filepath.FromSlash(goDir), userEnvPath, false)
+				//Also update path for user and local machine
+				updatePathVar("PATH", filepath.FromSlash(os.Getenv("GOROOT")), goDir, machineEnvPath, true)
+				updatePathVar("PATH", filepath.FromSlash(os.Getenv("GOROOT")), goDir, userEnvPath, false)
+				fmt.Println("Now using Go version " + version[2:] + ". Set GOROOT to " + goDir + ". Also updated PATH.")
 				fmt.Println("Note: You'll have to start another prompt to see the changes.")
 				return
 			}
@@ -177,6 +208,43 @@ func setEnvVar(envVar string, newVal string, envPath string, machine bool) {
 	}
 }
 
+func updatePathVar(envVar string, oldVal string, newVal string, envPath string, machine bool) {
+	//this sets the environment variable for either LOCAL_MACHINE or CURRENT_USER.
+	//They are set in the registry. both must be set since the GOROOT could be used from either location.
+	regplace := registry.CURRENT_USER
+	if machine {
+		regplace = registry.LOCAL_MACHINE
+	}
+	key, err := registry.OpenKey(regplace, envPath, registry.ALL_ACCESS)
+	if err != nil {
+		fmt.Println("error", err)
+		return
+	}
+	defer key.Close()
+
+	val, _, kerr := key.GetStringValue(envVar)
+	if kerr != nil {
+		fmt.Println("error", err)
+		return
+	}
+	pvars := strings.Split(val, ";")
+	for i, pvar := range pvars {
+		if pvar == newVal+"\\bin" {
+			//the requested new value already exists in PATH, do nothing
+			return
+		}
+		if pvar == oldVal+"\\bin" {
+			pvars = append(pvars[:i], pvars[i+1:]...)
+		}
+	}
+	val = strings.Join(pvars, ";")
+	val = val + ";" + newVal + "\\bin"
+	err = key.SetStringValue("PATH", val)
+	if err != nil {
+		fmt.Println("error", err)
+	}
+}
+
 func getDirVersion(dir string) string {
 	files, _ := ioutil.ReadDir(dir)
 	for _, f := range files {
@@ -197,8 +265,9 @@ func help() {
 	fmt.Println(" ")
 	fmt.Println("  gvm arch                     : Show architecture of OS.")
 	fmt.Println("  gvm install <version>        : The version must be a version of Go.")
-	fmt.Println("  gvm goroot [path]            : This shows any GOROOT. Optional path arg to set GOROOT to that.")
+	fmt.Println("  gvm goroot [path]            : Sets/appends GOROOT/PATH. Without the extra arg just shows current GOROOT.")
 	fmt.Println("  gvm list                     : List the Go installations at or adjacent to GOROOT. Aliased as ls.")
-	fmt.Println("  gvm use <version>            : Switch to use the specified version. This will set your GOROOT.")
+	fmt.Println("  gvm uninstall <version>      : Uninstall specified version of Go. If it was your GOROOT/PATH, make sure to set a new one after.")
+	fmt.Println("  gvm use <version>            : Switch to use the specified version. This will set your GOROOT and PATH.")
 	fmt.Println("  gvm version                  : Displays the current running version of gvm for Windows. Aliased as v.")
 }

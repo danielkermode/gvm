@@ -34,17 +34,22 @@ func Download(version string, arch string, root string) bool {
 
 	if response.Status[0:3] != "200" {
 		fmt.Println("Download failed for url " + url + ". You can check the url manually. Rolling Back.")
+		//remove the zip file after closing it.
 		defer os.Remove(filedir)
 		defer out.Close()
 		return false
 	}
+	//this is the folder with goX.X.X. Initially it has a folder called "go" with the required files.
+	//The aim is to move the files from "go" into the parent goX.X.X.
 	dest := filepath.Join(root, "go"+version)
+	//this is the "go" folder inside the new folder containing the files for running Go.
 	godest := filepath.Join(dest, "go")
 	ziperr := unzip(filedir, dest, version)
 	if ziperr != nil {
 		fmt.Println("Error while unzipping", url, "-", ziperr)
 		return false
 	}
+	//remove the zip file after closing it.
 	defer os.Remove(filedir)
 	defer out.Close()
 	//delete contents of go folder (happens after below defer)
