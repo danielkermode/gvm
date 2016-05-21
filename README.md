@@ -19,9 +19,11 @@ If you have Go installed, the simplest way to install is probably ```go get gith
 
 If you just want the executable (which you can use to get Go installations if you don't have one on your machine):
 
-amd64: http://danielkermode.github.io/amd64/gvm.exe
+amd64: https://github.com/danielkermode/gvm/releases/download/v1.0.0-amd64/gvm.exe
 
-386: http://danielkermode.github.io/386/gvm.exe
+386: https://github.com/danielkermode/gvm/releases/download/v1.0.0-386/gvm.exe
+
+The above are found at https://github.com/danielkermode/gvm/releases/.
 
 **How it works, for those interested**: You should have a GOROOT environment variable set on your computer, but if you don't this program can set one for you with ```gvm goroot```. You must also be running Windows, of course! You don't actually need Go installed if you have the .exe for this program, you can use this to get the Go files from scratch. ```gvm install <version>``` will extract the files needed for the desired version and put them in a folder called "goX.X.X" (eg. go1.6.2) which will be *adjacent* to your GOROOT. Then the other gvm commands simply look through these folders and determine the version numbers with the "VERSION" file in each directory that Go comes installed with. ```gvm use <version>``` will change your GOROOT to whatever directory satisfies the version number within this GOROOT environment. It will also change your PATH variable, by appending to PATH as needed. If you have an existing installation of Go, as long as the folder is called "go" or "goX.X.X" and it is adjacent to or is your GOROOT then it will be registered as normal. If there are multiple differently named directories containing the same installation of Go, the first one found will be taken for use by gvm and the others will be ignored (ideally you shouldn't have this in the first place, but it could happen by accident if you have one folder called "go" and another called "goX.X.X" with the same version).
 
