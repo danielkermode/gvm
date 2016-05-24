@@ -15,6 +15,9 @@ const (
 	GvmVersion = "1.0.0"
 )
 
+//callback function for looping over files. If true, breaks the loop.
+type callback func(file os.FileInfo, reg *regexp.Regexp, proot string) bool
+
 func main() {
 	args := os.Args
 	osArch := strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
@@ -104,19 +107,17 @@ func listGos() {
 		fmt.Println("No GOROOT set. Set a GOROOT for go installations with gvm goroot <path>.")
 		return
 	}
-	validDir := regexp.MustCompile(`go(\d\.\d\.\d){0,1}`)
-	gorootroot := filepath.Clean(os.Getenv("GOROOT") + "\\..")
-	files, _ := ioutil.ReadDir(gorootroot)
+	//store all Go versions so we don't list duplicates
 	goVers := make(map[string]bool)
-	fmt.Println("")
-	for _, f := range files {
+
+	callb := func(f os.FileInfo, validDir *regexp.Regexp, gorootroot string) bool {
 		if f.IsDir() && validDir.MatchString(f.Name()) {
 			goDir := filepath.Join(gorootroot, f.Name())
 			version := getDirVersion(goDir)
 			//check if the version already exists (different named dirs with the same go version can exist)
 			_, exists := goVers[version]
 			if exists {
-				continue
+				return false
 			}
 			str := ""
 			if goDir == os.Getenv("GOROOT") {
@@ -127,18 +128,19 @@ func listGos() {
 			goVers[version] = true
 			fmt.Println(str)
 		}
+		return false
 	}
+
+	loopFiles(callb)
 }
 
 func uninstall(unVer string) {
 	if unVer == "" {
 		fmt.Println("A version to uninstall must be specified.")
+		return
 	}
-	validDir := regexp.MustCompile(`go(\d\.\d\.\d){0,1}`)
-	gorootroot := filepath.Clean(os.Getenv("GOROOT") + "\\..")
-	files, _ := ioutil.ReadDir(gorootroot)
-	fmt.Println("")
-	for _, f := range files {
+
+	callb := func(f os.FileInfo, validDir *regexp.Regexp, gorootroot string) bool {
 		if f.IsDir() && validDir.MatchString(f.Name()) {
 			goDir := filepath.Join(gorootroot, f.Name())
 			version := getDirVersion(goDir)
@@ -146,11 +148,16 @@ func uninstall(unVer string) {
 				os.RemoveAll(goDir)
 				fmt.Println("Uninstalled Go version " + version[2:] + ".")
 				fmt.Println("Note: If this was your GOROOT, make sure to set a new GOROOT with gvm goroot <path>")
-				return
+				return true
 			}
 		}
+		return false
 	}
-	fmt.Println("Couldn't uninstall Go version " + unVer + ". Check Go versions with gvm list.")
+
+	found := loopFiles(callb)
+	if !found {
+		fmt.Println("Couldn't uninstall Go version " + unVer + ". Check Go versions with gvm list.")
+	}
 }
 
 func useGo(newVer string) {
@@ -160,12 +167,9 @@ func useGo(newVer string) {
 	}
 	if newVer == "" {
 		fmt.Println("A new version must be specified.")
+		return
 	}
-	validDir := regexp.MustCompile(`go(\d\.\d\.\d){0,1}`)
-	gorootroot := filepath.Clean(os.Getenv("GOROOT") + "\\..")
-	files, _ := ioutil.ReadDir(gorootroot)
-	fmt.Println("")
-	for _, f := range files {
+	callb := func(f os.FileInfo, validDir *regexp.Regexp, gorootroot string) bool {
 		if f.IsDir() && validDir.MatchString(f.Name()) {
 			goDir := filepath.Join(gorootroot, f.Name())
 			version := getDirVersion(goDir)
@@ -181,11 +185,29 @@ func useGo(newVer string) {
 				updatePathVar("PATH", filepath.FromSlash(os.Getenv("GOROOT")), goDir, userEnvPath, false)
 				fmt.Println("Now using Go version " + version[2:] + ". Set GOROOT to " + goDir + ". Also updated PATH.")
 				fmt.Println("Note: You'll have to start another prompt to see the changes.")
-				return
+				return true
 			}
 		}
+		return false
 	}
-	fmt.Println("Couldn't use Go version " + newVer + ". Check Go versions with gvm list.")
+	found := loopFiles(callb)
+	if !found {
+		fmt.Println("Couldn't use Go version " + newVer + ". Check Go versions with gvm list.")
+	}
+}
+
+func loopFiles(fn callback) bool {
+	validDir := regexp.MustCompile(`go(\d\.\d\.\d){0,1}`)
+	gorootroot := filepath.Clean(os.Getenv("GOROOT") + "\\..")
+	files, _ := ioutil.ReadDir(gorootroot)
+	fmt.Println("")
+	for _, f := range files {
+		shouldBreak := fn(f, validDir, gorootroot)
+		if shouldBreak {
+			return true
+		}
+	}
+	return false
 }
 
 func setEnvVar(envVar string, newVal string, envPath string, machine bool) {
