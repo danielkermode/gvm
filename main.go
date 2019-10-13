@@ -23,6 +23,10 @@ func main() {
 	osArch := strings.ToLower(os.Getenv("PROCESSOR_ARCHITECTURE"))
 	detail := ""
 
+	if osArch == "x86" {
+		osArch = "386"
+	}
+
 	if len(args) < 2 {
 		help()
 		return
