@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"golang.org/x/sys/windows/registry"
-	"gvm/web"
+	"github.com/danielkermode/gvm/web"
 	"io/ioutil"
 	"os"
 	"path/filepath"
