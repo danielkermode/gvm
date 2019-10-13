@@ -5,15 +5,15 @@ I created this out of need, since I wanted the equivalent of nvm for Go on Windo
 
 ```
 gvm arch                     : Show architecture of OS.
-gvm install <version>        : The version must be a version of Go.
-gvm goroot [path]            : Sets/appends GOROOT/PATH. Without the extra arg just shows current GOROOT. TAKE CARE, THIS CHANGES YOUR PATH!
+gvm install <version>        : Install a valid version of Go.
+gvm goroot [path]            : Set/append GOROOT/PATH. Without the extra arg just shows current GOROOT. TAKE CARE, THIS CHANGES YOUR PATH!
 gvm list                     : List the Go installations at or adjacent to GOROOT. Aliased as ls.
 gvm use <version>            : Switch to use the specified version. This will set your GOROOT and PATH.
 gvm uninstall <version>      : Uninstall specified version of Go. If it was your GOROOT/PATH, make sure to set a new one after.
-gvm version                  : Displays the current running version of gvm for Windows. Aliased as v.
+gvm version                  : Display the current running version of gvm for Windows. Aliased as v.
 ```
 
-If you want to build from source,  ```git clone``` this repo into your GOPATH and runn ```go install```.
+If you want to build from source,  ```git clone``` this repo into your GOPATH and run ```go install```.
 
 If you have Go installed, the simplest way to install is probably ```go get github.com/danielkermode/gvm```.Then if GOPATH/bin is in your PATH, you can run ```gvm``` from anywhere in the command line and you're good to go.
 
@@ -29,7 +29,7 @@ The above are found at https://github.com/danielkermode/gvm/releases/.
 
 A note on the PATH changing: it's fairly safe, I'm appending "\\bin" to all adjustments and it's extremely unlikely to screw up your PATH unless you enter something amazingly stupid that I haven't foreseen. However just make sure that your desired GOROOT is actually where Go is installed or where you want it to be installed if you do set it with ```gvm goroot```. If you're paranoid (and I wouldn't blame you; I nearly fucked up my whole machine while testing the PATH adjustments) then just set your GOROOT and PATH yourself, and you can use ```install``` and ```use``` as normal.
 
-If you read the source, be forgiving with the code. I'm not experienced with Go so I'm sure there's things I've overlooked or not done in the best way.
+If you read the source, be forgiving with the code. I'm not experienced with Go so I'm sure there are things I've overlooked or not done in the best way.
 
 You must restart your command prompt to register the changes to GOROOT after selecting a new Go version.
 
