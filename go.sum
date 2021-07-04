@@ -1,0 +1,4 @@
+github.com/danielkermode/gvm v1.0.0 h1:k0rXlRf4oQ0M5MaHJjdQjaV/0OyI4oDayPdnpi9I10M=
+github.com/danielkermode/gvm v1.0.0/go.mod h1:vFb6W+grcgxZWykT6yPmUxDNWLXT8ptC8DJnJJGucNQ=
+golang.org/x/sys v0.0.0-20200909081042-eff7692f9009 h1:W0lCpv29Hv0UaM1LXb9QlBHLNP8UFfcKjblhVCWftOM=
+golang.org/x/sys v0.0.0-20200909081042-eff7692f9009/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
