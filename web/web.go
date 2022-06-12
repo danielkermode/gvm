@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-var goBaseAddress = "https://golang.org/dl"
+var goBaseAddress = "https://golang.org/dl/"
 
 func Download(version string, arch string, root string) bool {
 	url := goBaseAddress + version + "." + arch + ".zip"
