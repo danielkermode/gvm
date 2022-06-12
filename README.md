@@ -1,3 +1,5 @@
+⛔️ DEPRECATED: This project is deprecated since I'm too lazy to support it, sorry. Feel free to fork it.
+
 # gvm
 This is a Go Version Manager for Windows, written in Go. There is a "gvm" already, but unfortunately it only supports unix systems. Basically it's the equivalent of "nvm" (Node Version Manager) but for Go. Credit to https://github.com/coreybutler/nvm-windows/. His program is also written in Go, and it was helpful looking through his code for inspiration.
 
